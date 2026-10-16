@@ -1,0 +1,519 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kuiz Nota 3 - KVDSMZ</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;padding:16px;min-height:100vh;
+ display:flex;align-items:center;justify-content:center;
+ font-family:Arial,sans-serif;color:#172b46;
+ background:linear-gradient(135deg,#071a32,#14578b)
+}
+.card{
+ width:100%;max-width:760px;background:white;
+ border-radius:20px;padding:26px;
+ box-shadow:0 15px 40px #0004
+}
+h1{text-align:center;color:#07558a;font-size:27px}
+.sub{text-align:center;color:#64748b}
+.stats{display:flex;gap:8px;margin:20px 0}
+.stat{flex:1;text-align:center;background:#eaf4fc;
+ padding:12px 5px;border-radius:10px;font-weight:bold}
+.progress{height:8px;background:#e2e8f0;border-radius:8px;overflow:hidden}
+#bar{height:100%;width:0;background:#0784dc;transition:.3s}
+#question{font-size:20px;font-weight:bold;line-height:1.5;margin:24px 0}
+.answers{display:grid;gap:11px}
+.answer{
+ background:white;border:2px solid #d5e0ec;color:#172b46;
+ padding:15px;border-radius:11px;text-align:left;
+ font-size:16px;line-height:1.4;cursor:pointer
+}
+.answer:hover:not(:disabled){background:#eef7ff;border-color:#1685dc}
+.answer:disabled{cursor:default}
+.correct{background:#dcfce7!important;border-color:#16a34a!important}
+.wrong{background:#fee2e2!important;border-color:#dc2626!important}
+#feedback{margin:16px 0;line-height:1.5;min-height:25px}
+button.main{
+ width:100%;border:0;background:#0878ca;color:white;
+ padding:15px;border-radius:11px;font-weight:bold;
+ font-size:16px;cursor:pointer;margin-top:12px
+}
+button.main:hover{background:#075b99}
+.hidden{display:none!important}
+.center{text-align:center}
+.big{font-size:48px}
+#review{line-height:1.7;text-align:left}
+.small{font-size:12px;color:#64748b;text-align:center;margin-top:18px}
+.field{margin:16px 0}
+.field label{display:block;font-weight:bold;margin-bottom:7px;color:#172b46}
+.field input{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px}
+.field input:focus{outline:2px solid #1685dc;border-color:#1685dc}
+.required{color:#dc2626}
+#saveStatus{font-size:14px;line-height:1.5;padding:12px;background:#fff7df;border-radius:9px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="card">
+ <section id="start">
+  <div class="center big">⚡ 🥽 🔥</div>
+  <h1>KUiz NOTA 3</h1>
+  <p class="sub">KVDSMZ • Cabaran Teknologi Kimpalan</p>
+  <div class="stats">
+   <div class="stat">30<br>Soalan</div>
+   <div class="stat">20s<br>Setiap soalan</div>
+   <div class="stat">300<br>Markah penuh</div>
+  </div>
+  <p>Uji penguasaan anda tentang prinsip, peralatan dan proses kimpalan. Pilih satu jawapan paling tepat bagi setiap soalan.</p>
+  <p>Markah: 10 mata bagi setiap jawapan betul. Jawapan dan penerangan dipaparkan selepas setiap soalan.</p>
+
+  <div class="field">
+   <label for="studentName">Nama Penuh Pelajar <span class="required">*</span></label>
+   <input id="studentName" name="nama" type="text" maxlength="100" autocomplete="name" placeholder="Masukkan nama penuh pelajar" required>
+  </div>
+  <div class="field">
+   <label for="studentClass">Kelas <span class="required">*</span></label>
+   <input id="studentClass" name="kelas" type="text" maxlength="50" placeholder="Contoh: DKM 1" required>
+  </div>
+  <div class="field">
+   <label for="studentId">Nombor Pelajar <span style="font-weight:normal;color:#64748b">(pilihan)</span></label>
+   <input id="studentId" name="noPelajar" type="text" maxlength="50" placeholder="Masukkan nombor pelajar jika ada">
+  </div>
+  <button class="main" onclick="startGame()">MULA KUIZ</button>
+ </section>
+
+ <section id="game" class="hidden">
+  <div class="stats">
+   <div class="stat">Soalan<br><span id="number"></span></div>
+   <div class="stat">Markah<br><span id="score">0</span></div>
+   <div class="stat">Masa<br><span id="time">20</span>s</div>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <div id="question"></div>
+  <div id="answers" class="answers"></div>
+  <div id="feedback" aria-live="polite"></div>
+  <button id="next" class="main hidden" onclick="nextQuestion()">SOALAN SETERUSNYA →</button>
+ </section>
+
+ <section id="result" class="hidden center">
+  <div class="big" id="medal">🏆</div>
+  <h1>KEPUTUSAN KUIZ</h1>
+  <h2 id="finalScore"></h2>
+  <p id="message"></p>
+  <p id="review"></p>
+  <p id="studentSummary" style="text-align:left;line-height:1.6"></p>
+  <div id="saveStatus" role="status" aria-live="polite">Keputusan kuiz akan dihantar ke Google Sheets selepas kuiz selesai.</div>
+  <button class="main" onclick="startGame()">CUBA LAGI</button>
+  <button class="main" onclick="showAnswers()">LIHAT SKEMA JAWAPAN</button>
+  <div id="answerKey" class="hidden" style="text-align:left;line-height:1.7"></div>
+ </section>
+ <div class="small">BELAJAR • BERLATIH • MENJADI PROFESIONAL</div>
+</div>
+
+<script>
+const questions = [
+{
+q:"1. Apakah perbezaan utama antara kimpalan lebur dengan kimpalan tak lebur?",
+a:["Kimpalan lebur menggunakan tekanan sahaja",
+"Kimpalan tak lebur sentiasa menggunakan elektrod bersalut",
+"Kimpalan lebur mencairkan logam asas, manakala kimpalan tak lebur tidak mencairkannya",
+"Kimpalan tak lebur hanya boleh digunakan untuk termoplastik"],
+c:2,e:"Kimpalan lebur mencairkan logam asas. Dalam kimpalan tak lebur, logam asas tidak dicairkan."
+},
+{
+q:"2. Apakah fungsi utama mesin kimpalan arka?",
+a:["Menurunkan voltan dan menghasilkan arus tinggi yang sesuai untuk membentuk arka",
+"Menaikkan voltan tanpa mengubah arus",
+"Menghasilkan gas pelindung daripada udara",
+"Mengawal kelajuan penyejukan logam sahaja"],
+c:0,e:"Mesin kimpalan arka menukarkan voltan tinggi kepada voltan rendah dengan arus tinggi untuk kerja kimpalan."
+},
+{
+q:"3. Mengapakah bekalan arus malar sesuai untuk kimpalan arka manual seperti SMAW?",
+a:["Ia memastikan voltan sentiasa sifar",
+"Ia menghapuskan keperluan elektrod",
+"Ia menukarkan arus terus kepada arus ulang-alik",
+"Ia membantu mengekalkan arus agak sekata apabila voltan berubah akibat perubahan jarak arka"],
+c:3,e:"Arus malar membantu mengekalkan arus walaupun jarak arka dan voltan berubah semasa kimpalan manual."
+},
+{
+q:"4. Apakah peranan salutan elektrod dalam proses SMAW?",
+a:["Mengukur kedalaman penembusan",
+"Membentuk perlindungan untuk kawah leburan dan menghasilkan sanga",
+"Mengawal tekanan gas daripada silinder",
+"Menggerakkan elektrod secara automatik dari gelungan"],
+c:1,e:"Salutan elektrod menghasilkan gas pelindung dan sanga untuk membantu melindungi kawasan kimpalan."
+},
+{
+q:"5. Apakah ciri utama mesin kimpalan arka jenis pengubah (transformer) yang dinyatakan dalam nota?",
+a:["Menggunakan enjin diesel sebagai sumber utama",
+"Menggunakan dawai elektrod berterusan",
+"Menghasilkan arka plasma tertumpu",
+"Menggunakan pengubah untuk menurunkan voltan dan meningkatkan ampere"],
+c:3,e:"Mesin jenis pengubah menggunakan transformer untuk menurunkan voltan dan meningkatkan arus."
+},
+{
+q:"6. Mesin kimpalan jenis jana kuasa panduan enjin paling sesuai digunakan apabila:",
+a:["Kerja hanya memerlukan kepingan sangat nipis",
+"Kerja mesti menggunakan gas argon",
+"Lokasi kerja tidak mempunyai bekalan elektrik",
+"Kerja hanya boleh dilakukan di dalam makmal"],
+c:2,e:"Mesin ini menggunakan jana kuasa yang digerakkan enjin petrol atau diesel dan sesuai di tempat tanpa bekalan elektrik."
+},
+{
+q:"7. Dalam kekutuban terus DCEN/DC-, elektrod disambungkan kepada:",
+a:["Terminal positif dan benda kerja juga positif",
+"Terminal negatif, manakala benda kerja berada pada terminal positif",
+"Terminal negatif dan benda kerja juga negatif",
+"Terminal positif, manakala benda kerja tidak disambungkan"],
+c:1,e:"Dalam DCEN, elektrod berada pada terminal negatif. Nota menyatakan kira-kira 70% haba tertumpu pada benda kerja."
+},
+{
+q:"8. Apakah ciri yang dikaitkan dengan kekutuban berbalik DCEP/DC+ dalam nota?",
+a:["Penusukan sederhana dan kolam leburan lebar",
+"Haba 70% tertumpu pada benda kerja",
+"Elektrod disambungkan kepada terminal negatif",
+"Penusukan dalam dan kolam leburan lebih kecil"],
+c:3,e:"DCEP meletakkan elektrod pada terminal positif dan menghasilkan penusukan lebih dalam menurut nota."
+},
+{
+q:"9. Apakah maksud voltan litar terbuka?",
+a:["Mesin dihidupkan tetapi kerja kimpalan belum dijalankan",
+"Arka telah dipanjangkan ketika kimpalan berlangsung",
+"Arus telah ditetapkan pada nilai maksimum",
+"Mesin telah diputuskan daripada bekalan kuasa"],
+c:0,e:"Voltan litar terbuka merujuk kepada keadaan mesin dihidupkan tanpa kerja kimpalan dijalankan."
+},
+{
+q:"10. Apakah yang dimaksudkan dengan tiupan arka (arc blow)?",
+a:["Gas pelindung tidak sampai ke kolam leburan",
+"Arka terpesong daripada arah yang dikehendaki akibat pengaruh medan magnet atau haba",
+"Elektrod cair sepenuhnya sebelum arka terbentuk",
+"Sanga melekat pada permukaan selepas kimpalan"],
+c:1,e:"Tiupan arka ialah keadaan aliran arka terpesong daripada arah yang dituju."
+},
+{
+q:"11. Apakah kombinasi elektrod dan gas pelindung yang betul bagi GTAW?",
+a:["Dawai elektrod berterusan dan karbon dioksida sahaja",
+"Elektrod keluli bersalut dan tiada gas pelindung",
+"Elektrod tungsten dan gas argon atau helium",
+"Elektrod tiub berisi fluks dan fluks berbutir"],
+c:2,e:"GTAW menggunakan elektrod tungsten dan gas pelindung seperti argon, helium atau campurannya."
+},
+{
+q:"12. Mengapakah GTAW sering dipilih untuk kerja kepingan nipis yang memerlukan kemasan baik?",
+a:["Kerana proses ini sentiasa menggunakan arus melebihi 2000 A",
+"Kerana sanga tebal menutup seluruh kumai",
+"Kerana elektrodnya sentiasa habis dalam satu laluan",
+"Kerana proses ini sesuai menghasilkan kimpalan bermutu tinggi dengan kemasan yang baik"],
+c:3,e:"Nota menerangkan GTAW banyak digunakan untuk kepingan nipis apabila mutu dan kemasan yang baik diperlukan."
+},
+{
+q:"13. Apakah fungsi rod penambah dalam GTAW?",
+a:["Membekalkan logam tambahan ke dalam kawah leburan untuk menguatkan sambungan",
+"Mengukur kadar aliran gas pelindung",
+"Menghasilkan arus elektrik di dalam silinder gas",
+"Menggantikan fungsi pengapit bumi"],
+c:0,e:"Rod penambah dileburkan ke dalam kawah leburan sebagai logam tambahan bagi sambungan."
+},
+{
+q:"14. Mengapakah gas argon banyak digunakan sebagai gas pelindung GTAW menurut nota?",
+a:["Kerana ia lebih ringan daripada helium",
+"Kerana ia tidak memerlukan silinder gas",
+"Kerana ia lebih murah daripada helium dan lebih berat daripada udara",
+"Kerana ia menghasilkan sanga untuk menutup kumai"],
+c:2,e:"Nota menyatakan argon lebih murah daripada helium dan sifatnya yang lebih berat membantu melindungi kawasan kimpalan."
+},
+{
+q:"15. Apakah ciri utama proses GMAW yang membezakannya daripada SMAW?",
+a:["Menggunakan elektrod tungsten yang tidak guna habis",
+"Menggunakan dawai elektrod tanpa salutan yang disuap secara berterusan",
+"Menggunakan fluks berbutir untuk menenggelamkan arka",
+"Menggunakan nyalaan daripada oksigen dan asetilena"],
+c:1,e:"GMAW menggunakan dawai elektrod tanpa salutan dalam bentuk gelungan yang disuap secara berterusan."
+},
+{
+q:"16. Apakah fungsi panel kawalan mesin GMAW?",
+a:["Menukarkan fluks menjadi gas argon",
+"Mengukur kedalaman penembusan tanpa pemeriksaan",
+"Memegang benda kerja dan mengisar kumai",
+"Melaraskan suapan dawai, gas pelindung, arus dan voltan"],
+c:3,e:"Panel kawalan menempatkan pelaras keluaran dawai, gas pelindung, arus dan voltan."
+},
+{
+q:"17. Sebuah kerja GMAW menggunakan arus melebihi 300 A. Jenis penyejukan sumpitan yang dinyatakan sesuai dalam nota ialah:",
+a:["Penyejukan udara untuk kerja ringan",
+"Penyejukan udara tanpa had arus",
+"Penyejukan air untuk kerja berat",
+"Tiada penyejukan diperlukan"],
+c:2,e:"Nota menyatakan sumpitan penyejukan air digunakan untuk kerja berat dengan arus melebihi 300 A."
+},
+{
+q:"18. Apakah salah satu kekurangan proses GMAW?",
+a:["Tidak boleh digunakan pada keluli karbon",
+"Peralatan kompleks dan mahal serta memerlukan gas pelindung",
+"Elektrod mesti ditukar selepas setiap sentuhan",
+"Proses ini hanya boleh dilakukan secara manual"],
+c:1,e:"Nota menyatakan peralatan GMAW kompleks dan mahal, serta gas pelindung menambah kos kimpalan."
+},
+{
+q:"19. Apakah yang menjadikan proses SAW dinamakan kimpalan arka tenggelam?",
+a:["Arka dan zon kimpalan dilindungi oleh lapisan fluks berbutir",
+"Elektrod tungsten ditenggelamkan di dalam air",
+"Gas helium mengelilingi keseluruhan mesin",
+"Benda kerja dicairkan menggunakan nyalaan asetilena"],
+c:0,e:"Fluks berbutir meliputi arka dan zon kimpalan, lalu melindunginya semasa proses SAW."
+},
+{
+q:"20. Mengapakah SAW terhad terutamanya kepada kedudukan rata dan mendatar?",
+a:["Arus terus tidak boleh digunakan dalam kedudukan tegak",
+"Elektrod tungsten akan patah jika mesin dicondongkan",
+"Gas pelindung akan membeku di atas kumai",
+"Fluks boleh terkeluar daripada kawasan kawah leburan apabila kedudukan tidak sesuai"],
+c:3,e:"Nota menerangkan fluks boleh keluar dari kawasan kawah leburan jika kimpalan bukan dalam kedudukan rata."
+},
+{
+q:"21. Apakah perbezaan utama elektrod FCAW berbanding dawai elektrod GMAW?",
+a:["FCAW menggunakan elektrod tungsten pepejal",
+"FCAW menggunakan rod yang tidak boleh melebur",
+"Elektrod FCAW berbentuk tiub dan mengandungi fluks",
+"Elektrod FCAW tidak boleh disuap secara berterusan"],
+c:2,e:"Elektrod FCAW berbentuk tiub dan diisi fluks; prosesnya menyerupai GMAW dari segi peralatan."
+},
+{
+q:"22. Apakah kelebihan FCAW yang dinyatakan dalam nota?",
+a:["Tidak memerlukan sumber kuasa elektrik",
+"Memiliki kadar enapan yang tinggi berbanding GMAW",
+"Tidak menghasilkan sanga dalam apa-apa keadaan",
+"Hanya sesuai untuk logam yang ketebalannya kurang daripada 1 mm"],
+c:1,e:"Nota menyenaraikan kadar enapan FCAW yang tinggi berbanding GMAW."
+},
+{
+q:"23. Dalam proses ESW, apakah yang berlaku selepas sanga lebur mencapai hujung elektrod?",
+a:["Arka dipadamkan dan tenaga diteruskan melalui rintangan elektrik sanga lebur",
+"Gas argon dihentikan dan elektrod tungsten ditarik keluar",
+"Fluks berbutir dikeluarkan untuk menampakkan arka",
+"Mesin bertukar kepada proses kimpalan oksi asetilena"],
+c:0,e:"Dalam ESW, arka dimulakan dahulu; selepas sanga lebur mencapai hujung elektrod, arka dipadamkan dan haba terhasil melalui rintangan elektrik sanga lebur."
+},
+{
+q:"24. Apakah kegunaan yang sesuai bagi ESW berdasarkan nota?",
+a:["Mencantumkan kepingan sangat nipis dengan rod tungsten",
+"Mengimpal paip kecil menggunakan nyalaan neutral",
+"Mengimpal aluminium menggunakan gas argon sahaja",
+"Mengimpal plat tebal, kira-kira 50 mm hingga melebihi 90 mm"],
+c:3,e:"ESW boleh mengimpal plat tebal dan digunakan untuk komponen besar."
+},
+{
+q:"25. Apakah yang membezakan arka pindahan dengan arka tanpa pindahan dalam PAW?",
+a:["Arka pindahan menggunakan gas helium sahaja",
+"Arka tanpa pindahan tidak memerlukan elektrod",
+"Arka pindahan melibatkan benda kerja dalam litar elektrik; arka tanpa pindahan terbentuk antara elektrod dengan muncung",
+"Arka pindahan hanya digunakan untuk kimpalan gas"],
+c:2,e:"Nota membezakan arka pindahan melalui litar benda kerja dan arka tanpa pindahan antara elektrod dengan muncung."
+},
+{
+q:"26. Apakah salah satu kelebihan PAW yang disebut dalam nota?",
+a:["Kos awal peralatan sentiasa lebih rendah",
+"Mudah menghidupkan arka dan meningkatkan kestabilan arka",
+"Boleh mengimpal semua ketebalan tanpa had",
+"Tidak memerlukan elektrod"],
+c:1,e:"PAW mempunyai kelebihan seperti memudahkan permulaan arka, meningkatkan kestabilan dan mengawal penembusan."
+},
+{
+q:"27. Apakah dua gas yang digunakan untuk menghasilkan nyalaan dalam kimpalan oksiasetilena?",
+a:["Argon dan helium",
+"Karbon dioksida dan nitrogen",
+"Hidrogen dan nitrogen",
+"Oksigen dan asetilena"],
+c:3,e:"Kimpalan oksiasetilena menggunakan campuran oksigen dan asetilena untuk menghasilkan nyalaan."
+},
+{
+q:"28. Apakah fungsi utama alatur gas dalam sistem oksiasetilena?",
+a:["Mengurangkan tekanan silinder kepada tekanan kerja yang sesuai dan membantu mengekalkannya",
+"Mencairkan logam asas tanpa nyalaan",
+"Mengukur kelajuan pergerakan elektrod",
+"Menghasilkan oksigen melalui elektrolisis"],
+c:0,e:"Alatur mengurangkan tekanan silinder kepada tekanan kerja dan mempunyai tolok untuk menunjukkan tekanan."
+},
+{
+q:"29. Apakah ciri nyalaan neutral dalam kimpalan oksiasetilena?",
+a:["Asetilena berlebihan berbanding oksigen",
+"Oksigen berlebihan berbanding asetilena",
+"Kadar oksigen dan asetilena adalah seimbang",
+"Tiada oksigen digunakan dalam nyalaan"],
+c:2,e:"Nyalaan neutral menggunakan kadar oksigen dan asetilena yang sama banyak atau seimbang."
+},
+{
+q:"30. Apakah peranan bahan lakur dalam proses meloyang dan kimpal loyang?",
+a:["Meningkatkan tekanan gas di dalam silinder",
+"Menyingkirkan oksida dan bahan pencemaran serta membantu tindakan rerambut",
+"Menggantikan semua fungsi logam penambah",
+"Menghasilkan arka elektrik di antara elektrod dengan benda kerja"],
+c:1,e:"Bahan lakur membantu menyingkirkan oksida dan bahan cemar serta memperbaik aliran logam penambah melalui tindakan rerambut."
+}
+];
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfe0I8oIfnAi0xdVXT18xrIFcd-yfl04MCKwQg5bjZGJXvnR303HsooFYDO6GMrkdW/exec";
+let order=[],pos=0,score=0,correctCount=0;
+let seconds=20,timer=null,locked=false;
+let missed=[];
+let studentInfo={nama:"",kelas:"",noPelajar:""};
+let resultSubmitted=false;
+
+function startGame(){
+ const nama=document.getElementById("studentName").value.trim();
+ const kelas=document.getElementById("studentClass").value.trim();
+ const noPelajar=document.getElementById("studentId").value.trim();
+ if(!nama){alert("Sila isi Nama Penuh Pelajar.");document.getElementById("studentName").focus();return;}
+ if(!kelas){alert("Sila isi Kelas.");document.getElementById("studentClass").focus();return;}
+ studentInfo={nama,kelas,noPelajar};
+ clearInterval(timer);
+ order=questions.map((_,i)=>i);
+ pos=0;score=0;correctCount=0;missed=[];resultSubmitted=false;
+ document.getElementById("start").classList.add("hidden");
+ document.getElementById("result").classList.add("hidden");
+ document.getElementById("game").classList.remove("hidden");
+ document.getElementById("answerKey").classList.add("hidden");
+ document.getElementById("score").textContent=0;
+ renderQuestion();
+}
+
+function renderQuestion(){
+ clearInterval(timer);locked=false;seconds=20;
+ const q=questions[order[pos]];
+ document.getElementById("number").textContent=(pos+1)+"/"+questions.length;
+ document.getElementById("time").textContent=seconds;
+ document.getElementById("score").textContent=score;
+ document.getElementById("bar").style.width=(pos/questions.length*100)+"%";
+ document.getElementById("question").textContent=q.q;
+ document.getElementById("feedback").textContent="";
+ document.getElementById("next").classList.add("hidden");
+ const box=document.getElementById("answers");box.innerHTML="";
+ q.a.forEach((text,i)=>{
+  const b=document.createElement("button");
+  b.className="answer";
+  b.textContent=String.fromCharCode(65+i)+". "+text;
+  b.onclick=()=>answer(i);
+  box.appendChild(b);
+ });
+ timer=setInterval(()=>{
+  seconds--;
+  document.getElementById("time").textContent=seconds;
+  if(seconds<=0){
+   clearInterval(timer);
+   if(!locked){
+    locked=true;missed.push(order[pos]);
+    reveal(-1);
+    document.getElementById("feedback").textContent=
+     "⏰ Masa tamat. Jawapan: "+String.fromCharCode(65+q.c)+". "+q.a[q.c]+". "+q.e;
+    document.getElementById("next").classList.remove("hidden");
+   }
+  }
+ },1000);
+}
+
+function answer(choice){
+ if(locked)return;
+ locked=true;clearInterval(timer);
+ const q=questions[order[pos]];
+ if(choice===q.c){
+  score+=10;correctCount++;
+  document.getElementById("feedback").textContent="✅ Betul! "+q.e;
+ }else{
+  missed.push(order[pos]);
+  document.getElementById("feedback").textContent=
+   "❌ Belum tepat. Jawapan: "+String.fromCharCode(65+q.c)+". "+q.a[q.c]+". "+q.e;
+ }
+ document.getElementById("score").textContent=score;
+ reveal(choice);
+ document.getElementById("next").classList.remove("hidden");
+}
+
+function reveal(choice){
+ const q=questions[order[pos]];
+ document.querySelectorAll(".answer").forEach((b,i)=>{
+  b.disabled=true;
+  if(i===q.c)b.classList.add("correct");
+  else if(i===choice)b.classList.add("wrong");
+ });
+}
+
+function nextQuestion(){
+ pos++;
+ if(pos<questions.length)renderQuestion();
+ else finish();
+}
+
+function finish(){
+ clearInterval(timer);
+ document.getElementById("game").classList.add("hidden");
+ document.getElementById("result").classList.remove("hidden");
+ document.getElementById("bar").style.width="100%";
+ document.getElementById("finalScore").textContent=score+"/300 markah";
+ document.getElementById("medal").textContent=
+  score>=250?"🥇":score>=180?"🥈":score>=100?"🥉":"📘";
+ document.getElementById("message").textContent=
+  score>=250?"Cemerlang! Penguasaan anda sangat baik.":
+  score>=180?"Bagus! Teruskan memperkukuh pengetahuan.":
+  score>=100?"Usaha yang baik. Ulang kaji topik yang sukar.":
+  "Teruskan berlatih dan ulang kaji Nota 3.";
+ document.getElementById("review").textContent=
+  "Jawapan betul: "+correctCount+"/30 | Jawapan salah atau tidak dijawab: "+(30-correctCount);
+ document.getElementById("studentSummary").textContent=
+  "Nama: "+studentInfo.nama+" | Kelas: "+studentInfo.kelas+
+  (studentInfo.noPelajar?" | No. Pelajar: "+studentInfo.noPelajar:"");
+ sendResultToSheets();
+}
+
+function sendResultToSheets(){
+ if(resultSubmitted)return;
+ resultSubmitted=true;
+ const payload={
+  nama:studentInfo.nama,
+  kelas:studentInfo.kelas,
+  noPelajar:studentInfo.noPelajar,
+  markah:score,
+  peratus:Math.round(score/300*10000)/100,
+  betul:correctCount,
+  salah:30-correctCount,
+  jumlahSoalan:30,
+  cubaanId:"KVDSMZ-"+Date.now()+"-"+Math.random().toString(36).slice(2,8),
+  tarikh:new Date().toISOString()
+ };
+ const status=document.getElementById("saveStatus");
+ status.textContent="Permintaan rekod sedang dihantar. Sila semak Google Sheets untuk mengesahkan rekod diterima.";
+ fetch(SCRIPT_URL,{
+  method:"POST",
+  mode:"no-cors",
+  headers:{"Content-Type":"text/plain;charset=utf-8"},
+  body:JSON.stringify(payload)
+ }).then(()=>{
+  status.textContent="Permintaan penghantaran telah dibuat. Pelayar tidak dapat mengesahkan respons Apps Script secara terus; sila semak Google Sheets untuk memastikan rekod diterima.";
+ }).catch(()=>{
+  status.textContent="Penghantaran tidak dapat disahkan. Sila semak sambungan internet dan tetapan Apps Script.";
+ });
+}
+
+function restartQuiz(){
+ clearInterval(timer);
+ document.getElementById("result").classList.add("hidden");
+ document.getElementById("game").classList.add("hidden");
+ document.getElementById("start").classList.remove("hidden");
+ document.getElementById("answerKey").classList.add("hidden");
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function showAnswers(){
+ const box=document.getElementById("answerKey");
+ box.classList.toggle("hidden");
+ box.innerHTML="<h3>Skema Jawapan</h3>"+questions.map((q,i)=>
+  "<p><b>"+(i+1)+". "+String.fromCharCode(65+q.c)+
+  "</b> — "+q.a[q.c]+"</p>").join("");
+}
+</script>
+</body>
+</html>
